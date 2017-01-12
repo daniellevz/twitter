@@ -20,7 +20,7 @@ def reactor(name):
 def build_get_name(context, client_id):
     return 'full_name', 200
 
-@reactor('get_name')
+#@reactor('get_name')
 def react_get_name(context, client_id, data):
     # save data
     # write to log
@@ -36,7 +36,7 @@ def build_tweet(context, client_id):
 
 @reactor('tweet')
 def reactor_tweet(context, client_id, data):
-    if random.randrange(2) % 2 == 0:
+    if data.decode() == 'good night':
         context.log.info('tired of this client..')
         return None
     else:
@@ -45,4 +45,4 @@ def reactor_tweet(context, client_id, data):
 @command('disconnect')
 def build_disconnect(context, client_id):
     # num seconds to disconnec to
-    return '10', 204
+    return '10', 440

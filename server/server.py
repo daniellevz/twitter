@@ -30,7 +30,10 @@ def run_command(context, command, client_id):
     context.log.info('client %s checking command %s' % (client_id, command.__command__))
     response = command(context, client_id)
     context.log.info('sending to client %s' % json.dumps(response))
-    return response 
+    _, status = response
+    if status != 200:
+        delete_client(client_id)
+    return response
 
 def get_command_by_name(name):
     for b in commands:
@@ -38,13 +41,16 @@ def get_command_by_name(name):
             return b
     raise ValueError('no command with name %s exists' % name)
 
-def disconnect_client(client_id):
-    for k, v in connected_clients.values():
+def delete_client(client_id):
+    for k, v in connected_clients.items():
         if v == client_id:
             connected_clients.pop(k)
             break
     states.pop(client_id)
-    return config.default_disconnect_time, 204
+
+def disconnect_client(client_id):
+    delete_client(client_id)
+    return config.server.default_disconnect_time, 440
 
 @app.route('/connect/<name>')
 def get_connect_command(name):
@@ -84,8 +90,8 @@ def get_submit():
     client_id = int(request.args['client_id'])
     if client_id not in states:
         config.log.error('client with unknow id connected. sending disconnect')
-        disconnect(client_id)
-        return 
+        command, status = disconnect_client(client_id)
+        return flask.jsonify(dict(command=command)), status 
     data = request.data
     config.log.info('received submit from client %s for data %s' % (client_id, data))
     # get user_id
