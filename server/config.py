@@ -12,7 +12,7 @@ fh.setFormatter(logFormatter)
 fh.setLevel(logging.DEBUG)
 logger.addHandler(ch)
 logger.addHandler(fh)
-
+logging.getLogger('pika').setLevel(logging.INFO)
 config = AttrDict(
     log = logger, 
     general = AttrDict(
@@ -25,5 +25,13 @@ config = AttrDict(
         port     = 80,
         commands_dir = '/home/user/projects/twitter/server/commands',
         default_disconnect_time = 10,
+    ),
+    mq = AttrDict(
+        events_exchange             = 'events',
+        products_exchange           = 'products',
+        events_info_routing_key     = 'info',
+        events_error_routing_key    = 'error',
+        host                        = 'mq',
+        default_no_pika_sleeptime   = 10,
     ),
 )
