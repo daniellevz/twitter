@@ -48,7 +48,7 @@ def get_command(context, client_id):
     return run_command(context, command, client_id)
 
 def run_command(context, command, client_id):
-    '''receives the commannd to run and the client. runs the command and if the status is not 200, deletes the client (deletes the state) and sends to the client what the command returned'''
+    '''receives the command to run and the client. runs the command and if the status is not 200, deletes the client (deletes the state) and sends to the client what the command returned'''
     context.log.info('client %s checking command %s' % (client_id, command.__command__))
     response = command(context, client_id)
     context.log.info('sending to client %s' % json.dumps(response))
@@ -90,6 +90,7 @@ def delete_client(context, client_id):
 
 def disconnect_client(context, client_id):
     '''deletes client and also sends disconnect. can be used if error occured or client has swayed from protocol'''
+    context.events_exchange.publish(context, 'info', 'disconnecting_client', client_id)
     delete_client(context, client_id)
     return context.server.default_disconnect_time, 440
 
