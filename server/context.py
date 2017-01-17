@@ -3,14 +3,15 @@ class Context(dict):
         try:
             return self[key]
         except KeyError:
-            raise AttributeError
+            raise AttributeError(key)
 
     def __setattr__(self, key, value):
         self[key] = value
 
     def __delattr__(self, key):
-        self.pop(key)
-    
-    def update(self, kwds):
-        for key, value in kwds.items():
-            self[key] = value
+        try:
+            self.pop(key)
+        except KeyError:
+            raise AttributeError(key)
+            
+
