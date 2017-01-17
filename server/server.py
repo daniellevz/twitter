@@ -1,9 +1,9 @@
 import flask, json, logging, random
 from flask import request
-from .utils import EventExchange, ProductExchange
 from .config import config
 from .context import Context
-from .model import *
+from twitter.rabbitmq import Connection, Exchange
+from .utils import create_product_data, create_event_data 
 from .utils import *
 
 # todo remove idea of name+id (stay only with name)
@@ -27,7 +27,8 @@ def get_connect_command(name):
     config.log.info('%s trying to connect' % name)
     if name in connected_clients.keys():
         config.log.warn('%s already connected' % name)
-        context.events_exchange.publish(context, 'warn', 'client_already_connected', connected_clients[name], name)
+        event_data = create_event_data(connected_clients[name], 'client_already_connected', name=name)
+        context.events_exchange.publish('warn', event_data)
         return '%s is already connected. use your id' % name, 403
     client_id = random.randrange(10000)
     while client_id in connected_clients.values():
@@ -38,7 +39,8 @@ def get_connect_command(name):
     config.log.debug('%s state is now 0' % (client_id))
     command, status = utils.get_command(context, client_id)
     data = {'client_id': client_id, 'command': command}
-    context.events_exchange.publish(context, 'info', 'new_client_connected', client_id, name)
+    event_data = create_event_data(client_id, 'new_client_connected')
+    context.events_exchange.publish('info', event_data)
     config.log.info('sending data  %s' % data)
     return flask.jsonify(data), status
 
@@ -47,13 +49,16 @@ def get_submit():
     client_id = int(request.args['client_id'])
     if client_id not in states:
         config.log.error('client with unknown id connected. sending disconnect')
-        context.events_exchange.publish(context, 'error', 'client with unknown id connected: %s' % command, client_id)
+        event_data = create_event_data(client_id, 'client with unknown id connected')
+        context.events_exchange.publish('error', event_data)
         command, status = utils.disconnect_client(context, client_id)
         return flask.jsonify(dict(command=command)), status 
     data = request.data
-    context.events_exchange.publish(context, 'info', 'received_submit. data: %s' % data, client_id)
+    event_data = create_event_data(client_id, 'received_submit', data=data.decode())
+    context.events_exchange.publish('info', event_data)
     command_name = commands[states[client_id]].__command__
-    context.products_exchange.publish(context, '%s.%s' % (command_name, client_id), command_name, data, client_id)
+    product_data = create_product_data(client_id, command_name, data)
+    context.products_exchange.publish('%s.%s' % (command_name, client_id), product_data)
     config.log.info('received submit from client %s for data %s' % (client_id, data))
     # get user_id
     new_command =utils.run_reactor(context,client_id, data)
@@ -69,18 +74,18 @@ def get_submit():
         config.log.info('command has no reactor moving on to next command')
     states[client_id] += 1 
     command, status = utils.get_command(context, client_id)
+    event_data = create_event_data(client_id, 'sending_command: %s' % command, command=command)
+    context.events_exchange.publish('info', event_data)
     if isinstance(command, dict):
-        context.events_exchange.publish(context, 'info', 'sending_command: %s' % command, client_id)
         return flask.jsonify(command), status
     else:
         data = dict(command=command)
-        context.events_exchange.publish(context, 'info', 'sending_command: %s' % command, client_id)
         return flask.jsonify(data), status
 
 def run():
     config.log.info('starting')
-    mq = MQ(config.mq.host)
-    context.products_exchange = ProductExchange(mq, config.mq.products_exchange, 'topic')
-    context.events_exchange = EventExchange(mq, config.mq.events_exchange, 'topic')
+    con = Connection(config.mq.host)
+    context.products_exchange   = Exchange(context, con, config.mq.products_exchange)
+    context.events_exchange     = Exchange(context, con, config.mq.events_exchange)
     app.run(config.server.host, config.server.port)
 

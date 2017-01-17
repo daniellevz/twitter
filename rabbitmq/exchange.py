@@ -4,7 +4,8 @@ Consumer = collections.namedtuple('Consumer', 'func queue binding_key no_ack')
 
 class Exchange:
     
-    def __init__(self, connection, name):
+    def __init__(self, context, connection, name):
+        self.context        = context
         self.connection     = connection
         self.channel        = self.execute(self.connection.channel)
         self._exchange      = name

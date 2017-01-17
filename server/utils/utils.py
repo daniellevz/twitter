@@ -15,7 +15,7 @@ def load_commands(context, commands_dir):
             data = reader.read()
         try:
             exec(data, m.__dict__)
-        except SyntaxError:
+        except:
             context.log.exception('error loading %s. skipping file' % name)
         for i in m.__dict__:
             if getattr(m.__dict__[i], '__command__', None):
@@ -90,7 +90,8 @@ def delete_client(context, client_id):
 
 def disconnect_client(context, client_id):
     '''deletes client and also sends disconnect. can be used if error occured or client has swayed from protocol'''
-    context.events_exchange.publish(context, 'info', 'disconnecting_client', client_id)
+    event_data = create_event_data(client_id, 'disconnecting_client')
+    context.events_exchange.publish('info', event_data)
     delete_client(context, client_id)
     return context.server.default_disconnect_time, 440
 
