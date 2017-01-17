@@ -35,6 +35,7 @@ if __name__ == '__main__':
                 send = r['command'] + '?'
                 print('got unknown command %s. sending: %s' % (r['command'], send))
     
+            time.sleep(1)
             r = requests.post('http://127.0.0.1/submit', params={'client_id': client_id}, data=send)
             #submit again
         if r.status_code == 440:

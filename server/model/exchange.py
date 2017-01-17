@@ -1,4 +1,5 @@
 from .mq import MQ
+
 class Exchange:
     
     def __init__(self, mq, exchange_name, exchange_type):

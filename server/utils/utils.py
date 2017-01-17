@@ -95,5 +95,4 @@ def disconnect_client(context, client_id):
     return context.server.default_disconnect_time, 440
 
 if __name__ == '__main__':
-    print(dir())
     load_commands()

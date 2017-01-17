@@ -1,0 +1,6 @@
+1.when using utils, have context issues (need a lot of things from server)
+possible solution-> context with all the global things. anything nicer?
+
+2. when have configuration that belong to subclass (mq confs) what is best practice? put them in class or in gloaval config?
+
+3. how to move logs to model (forexample exchange- config, param in __init__ orjustprint instead of logs?)

@@ -80,7 +80,7 @@ def get_submit():
 def run():
     config.log.info('starting')
     mq = MQ(config.mq.host)
-    context.events_exchange = EventExchange(mq, config.mq.events_exchange, 'topic')
     context.products_exchange = ProductExchange(mq, config.mq.products_exchange, 'topic')
+    context.events_exchange = EventExchange(mq, config.mq.events_exchange, 'topic')
     app.run(config.server.host, config.server.port)
 
