@@ -32,6 +32,9 @@ config = AttrDict(
         events_info_routing_key     = 'info',
         events_error_routing_key    = 'error',
         host                        = 'mq',
+        port                        = 5672,
+        username                    = 'guest',
+        password                    = 'guest',
         default_no_pika_sleeptime   = 10,
     ),
 )
